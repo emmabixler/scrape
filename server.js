@@ -1,6 +1,6 @@
 var express = require("express");
 var mongojs = require("mongojs");
-var cherrio = require("cheerio");
+var cheerio = require("cheerio");
 var mongoose = require("mongoose");
 var express = require("express-handlebars");
 var axios = require("axios");
@@ -15,7 +15,7 @@ db.on("error", function(error) {
 });
 
 app.get("/", function(req, res) {
-  res.send("Hello world");
+  res.send("Hello world 123");
 });
 
 //next to put the server in a route function,empty brackets mean find anything and match scarped to id
@@ -27,16 +27,34 @@ app.get("/all,", function(req, res) {
       res.json(found);
     }
   });
+  res.send(response.data);
 });
 //route 2- your choice of server
 
 app.get("/scrape", function(req, res) {
-  request("https://www.nytimes.com/", function(error, response, html) {
-    var $ = cheerio.load(html);
+  axios.get("https://www.nytimes.com/").then(function(response) {
+    var $ = cheerio.load(response.data);
+    res.send(response.data);
     $(".title").each(function(i, element) {
       var title = $(this)
         .childern("a")
         .text();
+      var link = $(this)
+        .childern("a")
+        .attr("href");
+      if (title && link) {
+        db.scrapedData.save({
+          title: title,
+          link: link
+        }),
+          function(error, saved) {
+            if (error) {
+              console.log(error);
+            } else {
+              console.log(saved);
+            }
+          };
+      }
     });
   });
 });
@@ -45,24 +63,6 @@ app.get("/scrape", function(req, res) {
 // var MONGODB_URI =
 //   process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 
-// axios.get("https://www.nytimes.com").then(function(response) {
-//   var $ = cheerio.load(response.data);
-//   var results = [];
-//   $("article").each(function(i, element) {
-//     var title = $(element)
-//       .children()
-//       .text();
-//     var link = $(element)
-//       .find("a")
-//       .attr("href");
-//     results.push({
-//       title: title,
-//       link: link
-//     });
-//   });
-
-//   console.log(results);
-// });
-app.listen(3000, function() {
+app.listen(3005, function() {
   console.log("App running on port 3000!");
 });
